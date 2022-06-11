@@ -7,6 +7,14 @@ Emal : mrcrimson@163.com
 import cv2
 import random,time,hashlib,itertools
 import numpy as np
+import ffmpy3
+
+# 一个用ffmpeg的思路：
+# 首先直接生成一张已经隐写好的图片
+# 然后利用ffmpeg写入
+# 问题的难点就转化为了图像隐写问题
+
+
 
 #visible watermark + blind watermark
 #what put in blind watermark : Hash(ID+the time we begin embed watermark)
@@ -69,7 +77,7 @@ def img_embed_watermark(img):
     # blind watermark dct mid-frequency
     text = str(ID)+begin_time
     bitText = toBits(text)
-    print(text)
+    print("Embed watermark is "+text)
     if ((w / 8) * (h / 8) < len(text)):
         print("Error: Message too large to encode in image")
         return False
@@ -175,16 +183,14 @@ def toBits(text):
     return bits
 
 if __name__ == '__main__':
-    '''
     img = cv2.imread("test1.jpg")
     embed_img,watermark_size = img_embed_watermark(img)
-    cv2.imshow("embed_img",embed_img)
+    cv2.imwrite("embed_test1.jpg",embed_img)
     cv2.waitKey()
     watermark = img_extract_watermark(embed_img,watermark_size)
-    print(watermark)
-    '''
+    print("Extract watermark is "+watermark)
 
-    video_root = "test_video.mp4"
-    size = Embed_watermark(video_root)
-    text = Extract_watermark("embed_video.avi",size)
-    print("The Watermark is" , text)
+    # video_root = "test_video.mp4"
+    # size = Embed_watermark(video_root)
+    # text = Extract_watermark("embed_video.avi",size)
+    # print("The Watermark is" , text)
