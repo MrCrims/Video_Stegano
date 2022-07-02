@@ -3,3 +3,7 @@
 *.m4a
 *.mp4
 .idea
+*.mov
+*.png
+/frames/*.png
+/tmp/*.png
