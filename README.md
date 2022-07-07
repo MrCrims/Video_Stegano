@@ -4,7 +4,7 @@
 
  https://github.com/MrCrims/Video_Stegano.git
 
-
+working time ： 3 * 4+4*5+10 * 2 + 13 = 65h
 
 ## 现在面临的问题
 

@@ -4,12 +4,21 @@
 @auther = MrCrimson
 Emal : mrcrimson@163.com
 '''
+from stegano import lsb
 import cv2
 import random,time,hashlib,itertools
 import numpy as np
+from ffmpy3 import FFmpeg
+import os
+from subprocess import call,STDOUT
 
-#visible watermark + blind watermark
-#what put in blind watermark : Hash(ID+the time we begin embed watermark)
+# 一个用ffmpeg的思路：
+# 首先直接生成一张已经隐写好的图片
+# 然后利用ffmpeg写入
+# 问题的难点就转化为了图像隐写问题
+
+
+
 visible_text = "Random_Lumina"
 ID = 123456789
 begin_time = time.ctime()
@@ -28,29 +37,35 @@ def Embed_watermark(video_root):
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    fourcc = cv2.VideoWriter_fourcc('D','I','V','X')
-    out = cv2.VideoWriter("embed_video.avi",fourcc,fps,(w,h))
+    if not os.path.exists('./frames'):
+        os.mkdir('frames')
+    folder = './frames'
+    count = 0
     while cap.isOpened():
         ret,img = cap.read()
         if ret == True:
             embed_img,size = img_embed_watermark(img)
             frame = embed_img
-            out.write(frame)
+            cv2.imwrite(os.path.join(folder,"{:d}.png".format(count)),frame)
+            count += 1
+            # out.write(frame)
         else:
             break
     cap.release()
-    out.release()
+    call(["ffmpeg", "-i", "frames/%d.png" , "-vcodec", "png", "./video.mov", "-y"],stdout=open(os.devnull, "w"), stderr=STDOUT)
     return size
 
-def Extract_watermark(video_root,size):
-    cap = cv2.VideoCapture(video_root)
-    while True:
-        ret,img = cap.read()
-        if ret == True:
-            watermark = img_extract_watermark(img,size)
-            if len(watermark) != 0:
-                break
-    cap.release()
+def Extract_watermark(video_root,size=33):
+    # cap = cv2.VideoCapture(video_root)
+    if not os.path.exists('./tmp'):
+        os.mkdir('tmp')
+    folder = './tmp/'
+    call(["ffmpeg", "-i", "./video.mov" , "-vcodec", "png", "./tmp/%d.png"])
+    for i in range(size):
+        file_name = "{}{}.png".format(folder,i+1)
+        img = cv2.imread(file_name)
+        watermark = img_extract_watermark(img)
+        print("The Watermark is" , watermark)
     return watermark
 
 
@@ -69,7 +84,7 @@ def img_embed_watermark(img):
     # blind watermark dct mid-frequency
     text = str(ID)+begin_time
     bitText = toBits(text)
-    print(text)
+    print("Embed watermark is "+text)
     if ((w / 8) * (h / 8) < len(text)):
         print("Error: Message too large to encode in image")
         return False
@@ -122,7 +137,7 @@ def img_embed_watermark(img):
     sImg = cv2.merge((sImg, gImg, rImg))
     return sImg,len(text)
 
-def img_extract_watermark(img,watermark_size):
+def img_extract_watermark(img,watermark_size=33):
     w,h,_ = img.shape
     textBits = []
     textsize = None
@@ -175,16 +190,14 @@ def toBits(text):
     return bits
 
 if __name__ == '__main__':
-    '''
     img = cv2.imread("test1.jpg")
     embed_img,watermark_size = img_embed_watermark(img)
-    cv2.imshow("embed_img",embed_img)
+    cv2.imwrite("embed_test1.jpg",embed_img)
     cv2.waitKey()
     watermark = img_extract_watermark(embed_img,watermark_size)
-    print(watermark)
-    '''
+    print("Extract watermark is "+watermark)
 
     video_root = "test_video.mp4"
-    size = Embed_watermark(video_root)
-    text = Extract_watermark("embed_video.avi",size)
+    # size = Embed_watermark(video_root)
+    text = Extract_watermark("D:/Clique/VideoSteganography/demo/video.mov")
     print("The Watermark is" , text)
